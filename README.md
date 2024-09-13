@@ -1,5 +1,5 @@
 ### SquirrelOS
-An trainig operating system for my university course
+A trainig operating system for my university course
 
 ```
                     .                               .',',,.               
