@@ -24,5 +24,5 @@ An trainig operating system for my university course
                        ;KMMMMMMMMMMMMMMMMMMWoxWMMMMMKc.                  
                      .   'KMMMMMMMMMMMMMMMMMMMMMMM0:                     
                    l0XK00KNMMMMMKWMMMMW0l;cONWKxo'                       
-                     ..'''''''..  ....                                   
+                      ..'''''''..  ....                                   
 ```
