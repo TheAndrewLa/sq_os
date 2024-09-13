@@ -6,8 +6,8 @@ section .text
 
 cli
 
-xor eax, eax
-mov ss, eax
+xor ax, ax
+mov ss, ax
 mov sp, 0x7C00
 
 mov ax, 0x7C0
