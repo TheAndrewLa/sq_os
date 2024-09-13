@@ -17,24 +17,21 @@ sti
 
 ; Here's a code that performs printing 'hello world'
 
-mov ah, 0xE
-xor di, di
+mov ax, 0x0E48
+mov bx, greeting + 0x1
 
 print_loop:
-        mov al, byte [greeting + di]
-
+        int 0x10
+        
+        mov al, byte [bx]
+        inc bx
+        
         test al, al
-        jz main_loop
-
-        int 0x10 
-
-        inc di
-        jmp print_loop
+        jnz print_loop
 
 ; Infinite loop (protection from UB)
 
-main_loop:
-        jmp main_loop
+jmp $
 
 ; Just info about size of program
 
