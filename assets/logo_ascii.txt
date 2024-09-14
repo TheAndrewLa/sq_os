@@ -1,7 +1,4 @@
-### SquirrelOS
-A trainig operating system for my university course
-
-```                                                      
+                                                         
                                         .;odooc,.         
               kX.;O                  ,kKMMMMMMMMMWKd.      
              .WWNMMc                :OMMMMMMMMMMMMMMMXc     
@@ -20,4 +17,4 @@ A trainig operating system for my university course
                    lNMMMMMMMMMMMMMMO0MMMMXc              
                 'cc;,:NMMMMMMMMMMX0NMMMW0:                
                 .,:oolllll;'cll:.   ',.                   
- ```
+                                                         
