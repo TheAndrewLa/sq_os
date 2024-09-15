@@ -17,7 +17,7 @@ sti
 
 ; Here's a code that performs printing 'hello world'
 
-mov ax, 0x0E48
+mov ax, 0x0E
 mov si, greeting
 
 print_loop:
