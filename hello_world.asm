@@ -18,13 +18,11 @@ sti
 ; Here's a code that performs printing 'hello world'
 
 mov ax, 0x0E48
-mov bx, greeting + 0x1
+mov si, greeting
 
 print_loop:
+        lodsb
         int 0x10
-        
-        mov al, byte [bx]
-        inc bx
         
         test al, al
         jnz print_loop
