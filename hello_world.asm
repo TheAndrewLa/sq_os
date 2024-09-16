@@ -31,7 +31,7 @@ print_loop:
 
 jmp $
 
-; Just info about size of program
+; "Comp-time" print about code size
 
 %assign CODE_SIZE $ - $$
 %warning Size of code is CODE_SIZE
