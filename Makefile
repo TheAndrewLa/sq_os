@@ -20,5 +20,5 @@ build_floppy: $(src_names) | build_dir
 	@dd if=build/$(binary_name) of=build/$(image_name) conv=notrunc
 
 debug: build_floppy
-	@qemu-system-i386 -fda build/$(image_name)
+	@qemu-system-i386 -display sdl,gl=on -nic none -fda build/$(image_name) 
 

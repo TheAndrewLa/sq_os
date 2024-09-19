@@ -17,7 +17,7 @@ sti
 
 ; Here's a code that performs printing 'hello world'
 
-; First version (28 bytes at all)
+; First version (29 bytes at all)
 
 mov ah, 0xE
 mov si, greeting
