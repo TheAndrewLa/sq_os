@@ -17,8 +17,12 @@ sti
 
 ; Here's a code that performs printing 'hello world'
 
+; First version (28 bytes at all)
+
 mov ah, 0xE
 mov si, greeting
+
+cld
 
 print_loop:
         lodsb
@@ -39,7 +43,7 @@ jmp $
 greeting: db "Hello World!", 0x0
 
 times 510 - ($ - $$) db 0x0
-db 0x55, 0xAA
+dw 0xAA55
 
 ; "Comp-time" assertion that our file is not more than 512 bytes
 
