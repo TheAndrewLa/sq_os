@@ -1,5 +1,5 @@
 ### Squirrex
-#### A simple OS from syberia
+#### A simple OS from siberia
 
 ```
                                                             
