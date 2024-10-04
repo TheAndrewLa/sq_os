@@ -1,5 +1,5 @@
-### SquirrelOS
-#### A trainig operating system for my university course
+### Squirrex
+#### A simple OS from syberia
 
 ```
                                                             
