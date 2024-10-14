@@ -9,7 +9,7 @@ HEADS_COUNT equ 2
 CYLINDERS_COUNT equ 20
 
 DATA_SEGMENT equ gdt_data - gdt_null
-CODE_SEGMENT equ gdt_code64 - gdt_null
+CODE_SEGMENT equ gdt_code - gdt_null
 
 ; Kernel prologue
 
@@ -17,9 +17,9 @@ CODE_SEGMENT equ gdt_code64 - gdt_null
 
         xor ax, ax
         mov ss, ax
-        mov sp, 0x7C00
+        mov sp, 0x7c00
 
-        mov ax, 0x7C0
+        mov ax, 0x7c0
         mov ds, ax
 
 ; Reading by 2 sectors (1kb)
@@ -63,68 +63,64 @@ heads:
         jne sectors
 
 cylinders:
-        xor dh, dh                     ; Set head to initial head
+        xor dh, dh                  ; Set head to initial head
 
-        inc ch                         ; Inrease index of cylinder & check
-        cmp ch, CYLINDERS_COUNT        ; 20
+        inc ch                      ; Inrease index of cylinder & check
+        cmp ch, CYLINDERS_COUNT     ; 20
 
         jne sectors
 
-        jmp long_mode                  ; SUCCESS! (all sectors were read, going to long mode)
+        jmp protected_mode          ; SUCCESS! (all sectors were read)
 
 error_handling:
         inc di               ; Incresing attempts count and try again
         cmp di, 0x5          ;
         jne sectors
 
-fatal:
         mov ax, 0x0e00 + '?'
         int 0x10
         int 0x10
         int 0x10
 
-        ; TODO: more informative message about an error (pass an error on BX register)
-
         jmp $
 
-long_mode:
+protected_mode:
+
         lgdt [gdt_descriptor]
 
-        ; Set up PDP, PD, PT (or make it preloaded)
+        mov eax, cr0            ;
+        or al, 0x1              ; Setting up control register
+        mov cr0, eax            ;
 
-        ; Enable PAE
-        ; Set control registers
-        
-        ; Set segment registers
+        jmp CODE_SEGMENT : protected_mode_jump + 0x7c00
 
-        jmp $
+[BITS 32]
 
-[BITS 64]
+protected_mode_jump:
+        mov eax, DATA_SEGMENT     ;
+        mov ss, eax               ;
+        mov ds, eax               ; Setting up stack segment, data segment, extra segments
+        mov es, eax               ;
+        mov fs, eax               ;
+        mov gs, eax               ;
 
-long_mode_enter:
-        mov rax, DATA_SEGMENT
-        mov ss, rax
-        mov ds, rax
-        mov es, rax
-        mov fs, rax
-        mov gs, rax
+        mov esp, 0x20000          ; Setting up stack pointer
 
-        ; Far jump here
+        jmp CODE_SEGMENT : 0x20200
 
 ; Descriptors of segments
 
 gdt_null: dq 0x0
-
-gdt_code32: dq 0x004F9A000000FFFF
-gdt_code64: dq 0x0020980000000000
-
+gdt_code: dq 0x004F9A000000FFFF
 gdt_data: dq 0x004F92000000FFFF
 
 ; GDT Descriptor should be 80bit
 
 gdt_descriptor:
         dw $ - gdt_null - 1
-        dq gdt_null + 0x20000
-        
+        dd gdt_null + 0x20000
+
 times 510 - ($ - $$) db 0x0
 dw 0xAA55
+
+; (c) by andrew.la
