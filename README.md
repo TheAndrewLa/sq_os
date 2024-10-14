@@ -1,6 +1,11 @@
 ### Squirrex
 #### A simple OS from siberia
 
+#### To run
+1. Install `qemu-system`
+2. Clone repo
+3. Run `make deubg`
+
 ```
                                                             
                 .                         .sssss...          
