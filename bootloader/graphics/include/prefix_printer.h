@@ -1,0 +1,5 @@
+// prefix_printer.h
+#ifndef BOOTLOADER_GRAPHICS_PREFIX_PRINTER_H
+#define BOOTLOADER_GRAPHICS_PREFIX_PRINTER_H
+
+#endif

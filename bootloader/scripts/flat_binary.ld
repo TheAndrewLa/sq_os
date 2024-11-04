@@ -1,10 +1,11 @@
-ENTRY(kernel_main)
 OUTPUT_FORMAT(binary)
+ENTRY(loader_main)
 
-SECTIONS { 
+SECTIONS {
     . = 0x20200;
 
     .text : {
+        build/main.o (.text)
         *(.text)
     }
 
@@ -12,10 +13,6 @@ SECTIONS {
         *(.data)
     }
 
-    .bss : {
-        *(.bss)
-    }
-    
     .rodata : {
         *(.rodata)
     }
