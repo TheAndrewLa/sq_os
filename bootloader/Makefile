@@ -1,10 +1,14 @@
 # Folders
 
+SUBDIRECTORIES = graphics disk fs
+
 BUILD_DIR = build
+BUILD_SUBDIR = $(SUBDIRECTORIES:%=$(BUILD_DIR)/%)
+
 RELEASE_DIR = release
+RELEASE_SUBDIR = $(SUBDIRECTORIES:%=$(RELEASE_DIR)/%)
 
 LOGS_DIR = logs
-
 DUMPS_DIR = dumps
 
 # Names of entries
@@ -12,7 +16,7 @@ DUMPS_DIR = dumps
 VBR_SOURCE = vbr.asm
 VBR_BINARY = vbr.bin
 
-SOURCES = $(wildcard *.cpp)
+SOURCES = $(wildcard *.cpp) $(wildcard */*.cpp)
 OBJECTS = $(SOURCES:%.cpp=$(BUILD_DIR)/%.o)
 
 DEBUG_BINARY = bootloader.elf
@@ -21,11 +25,8 @@ BINARY = bootloader.bin
 
 IMAGE_NAME = sqos_bootloader.img
 
-# Build flags (C)
-# TODO: setting up SSE and allow it in compilation
-
 COMMON_COMPILE_FLAGS = -mno-sse -mno-sse2 -mno-sse3 -mno-sse4 -mno-sse4.1 -mno-sse4.2 -m32 -std=c++20 -ffreestanding -fno-pic -fno-exceptions -fno-rtti -c
-RELEASE_COMPILE_FLAGS = -O3
+RELEASE_COMPILE_FLAGS = -Os
 DEBUG_COMPILE_FLAGS = -g -O0 -Wall
 
 .PHONY: clean
@@ -34,18 +35,23 @@ all: clean bootloader_debug
 
 clean:
 	@rm -rf $(BUILD_DIR)
+	@rm -rf $(BUILD_SUBDIR)
+
 	@rm -rf $(RELEASE_DIR)
+	@rm -rf $(RELEASE_SUBDIR)
+
 	@rm -rf $(LOGS_DIR)
 	@rm -rf $(DUMPS_DIR)
 
-dir:
+dirs:
 	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(BUILD_SUBDIR)
 
-$(VBR_BINARY): dir
+$(VBR_BINARY): dirs
 	@nasm -fbin $(VBR_SOURCE) -o $(BUILD_DIR)/$@
 
-$(OBJECTS): $(BUILD_DIR)/%.o: %.cpp | dir
-	@clang++ $(DEBUG_COMPILE_FLAGS) $(COMMON_COMPILE_FLAGS) $*.cpp -o $(BUILD_DIR)/$*.o
+$(OBJECTS): $(BUILD_DIR)/%.o: %.cpp | dirs
+	@clang++ $(COMMON_COMPILE_FLAGS) $(RELEASE_COMPILE_FLAGS) $*.cpp -o $(BUILD_DIR)/$*.o
 
 $(DEBUG_BINARY): $(OBJECTS)
 	@ld -m elf_i386 $(OBJECTS) -T scripts/debug_binary.ld -o $(BUILD_DIR)/$@
@@ -61,8 +67,8 @@ $(IMAGE_NAME): $(BINARY) $(VBR_BINARY)
 bootloader_release: $(IMAGE_NAME)
 bootloader_debug: $(DEBUG_BINARY) $(IMAGE_NAME)
 
-debug: bootloader_debug
+debug: clean bootloader_debug
 	@qemu-system-i386 -display sdl,gl=on -nic none -S -s -fda $(BUILD_DIR)/$(IMAGE_NAME)
 
-release: bootloader_release
+release: clean bootloader_release
 	@qemu-system-i386 -display sdl,gl=on -nic none -fda $(BUILD_DIR)/$(IMAGE_NAME)
