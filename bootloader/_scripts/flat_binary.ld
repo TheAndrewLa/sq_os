@@ -9,11 +9,11 @@ SECTIONS {
         *(.text)
     }
 
-    .data : {
-        *(.data)
-    }
-
     .rodata : {
         *(.rodata)
+    }
+
+    .data : {
+        *(.data)
     }
 }

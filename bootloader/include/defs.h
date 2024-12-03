@@ -4,7 +4,12 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <functional>
+
 #define ASM_ONELINE(str) __asm__ volatile(str)
+
+#define ASM_CLI() ASM_ONELINE("cli")
+#define ASM_STI() ASM_ONELINE("sti")
 
 namespace boot {
 
@@ -22,6 +27,8 @@ using int64 = ::std::int64_t;
 
 using usize = ::std::size_t;
 using isize = ::std::ptrdiff_t;
+
+using assert_fn = ::std::function<void(bool, const char*)>;
 
 }  // namespace boot
 

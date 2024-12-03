@@ -2,7 +2,13 @@
 #ifndef BOOTLOADER_GRAPHICS_CONTEXT_H
 #define BOOTLOADER_GRAPHICS_CONTEXT_H
 
+// +======================+
+// |       CONTEXT        |
+// +======================+
+
 #include "../../include/defs.h"
+#include "../../include/memory.h"
+#include "../../include/ports.h"
 
 namespace boot::graphics {
 
@@ -41,11 +47,15 @@ struct context {
   context& operator=(const context&) = delete;
   context& operator=(context&&) = delete;
 
-  inline void set_background_color(colors color) { background_color_ = color; }
-  inline void set_text_color(colors color) { text_color_ = color; }
+  /*
+    TODO: create context's stack (push_color/pop_color)
+  */
 
-  inline colors get_background_color() const { return background_color_; }
-  inline colors get_text_color() const { return text_color_; }
+  inline colors& back_color() { return back_color_; }
+  inline const colors& back_color() const { return back_color_; }
+
+  inline colors& text_color() { return text_color_; }
+  inline const colors& text_color() const { return text_color_; }
 
   void set_char(char code);
 
@@ -64,15 +74,18 @@ struct context {
   static constexpr usize ROW_SIZE = 80;
   static constexpr usize COLUMN_SIZE = 25;
 
+  static constexpr usize STACK_SIZE = 32;
+
   inline uint16* get_cursor() {
     static_assert(VGA_MEMORY_START < VGA_MEMORY_END);
-
     auto ptr = reinterpret_cast<uint16*>(VGA_MEMORY_START);
 
     return ptr + x_ + (y_ * ROW_SIZE);
   }
 
-  colors background_color_;
+  // TODO: remove it and work with stack
+
+  colors back_color_;
   colors text_color_;
 
   usize x_;

@@ -2,8 +2,6 @@
 
 section .text
 
-; Constant pool (he-he)
-
 SECTORS_COUNT equ 18
 HEADS_COUNT equ 2
 CYLINDERS_COUNT equ 20
@@ -11,7 +9,7 @@ CYLINDERS_COUNT equ 20
 DATA_SEGMENT equ gdt_data - gdt_null
 CODE_SEGMENT equ gdt_code - gdt_null
 
-; Kernel prologue
+; Bootloader prologue
 
         cli
 
@@ -91,22 +89,24 @@ protected_mode_setup:
         mov eax, cr0            ;
         or eax, 0x1             ; Setting up control register
         mov cr0, eax            ;
-
+        
         jmp CODE_SEGMENT : protected_mode_jump + 0x7C00
 
 [BITS 32]
 
 protected_mode_jump:
-        mov eax, DATA_SEGMENT     ;
-        mov ds, eax               ; Setting data segment & some extra segments
-        mov es, eax               ;
-        mov fs, eax               ;
-        mov gs, eax               ;
+        mov eax, DATA_SEGMENT         ;
+        mov ds, eax                   ; Setting data segment & some extra segments
+        mov es, eax                   ;
+        mov fs, eax                   ;
+        mov gs, eax                   ;
 
-        mov ss, eax               ; Setting stack segment
-        mov esp, 0x20000          ; Setting stack pointer
+        mov dword [0xc1040], 0x0
 
-        jmp 0x20200 - 0x7C00      ; C++ code entry point address offset
+        mov ss, eax                   ; Setting stack segment
+        mov esp, 0x20000              ; Setting stack pointer
+
+        jmp CODE_SEGMENT : 0x20200    ; C++ code bootloader address offset
 
 gdt_null: dq 0x0
 gdt_code: dq 0x00CF9A000000FFFF
