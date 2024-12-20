@@ -157,13 +157,8 @@ extern "C" void kernel_main() {
   uint32 cr4 = registers::read_cr4();
   registers::write_cr4(cr4 | (1 << 5) | (1 << 4));
 
-  printer << kernel_addresses.get_pdp() << '\n';
-  printer << kernel_addresses.get_pdp()->get_directories() << '\n';
-
-  registers::write_cr3(reinterpret_cast<uint32>(kernel_addresses.get_pdp()));
-
-  // uint32 cr0 = registers::read_cr0();
-  // registers::write_cr0(cr0 | (1 << 31));
+  uint32 cr0 = registers::read_cr0();
+  registers::write_cr0(cr0 | (1 << 31));
 
   ASM_STI();
   ASM_ONELINE("jmp .");

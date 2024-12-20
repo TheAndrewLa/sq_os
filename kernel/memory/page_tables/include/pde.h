@@ -44,8 +44,9 @@ struct pd_entry {
   inline uint8 get_dirty_bit() const { return dirty_bit_; }
   inline uint8 get_access_bit() const { return access_bit_; }
 
-  inline void set_address(wide_ptr address) { address_ = address >> 20; }
-  inline wide_ptr get_address() const { return address_ << 20; }
+  inline void set_address(wide_ptr address) { address_ = (address >> 20); }
+
+  inline wide_ptr get_address() const { return (address_ << 20); }
 
  private:
   [[maybe_unused]] uint8 present_ : 1;

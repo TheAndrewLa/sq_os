@@ -80,6 +80,8 @@ void virtual_address_space::map_address(const mapping_args& args,
 
   pde->set_mode((args.is_writable) ? page_mode::read_write : page_mode::read);
 
+  pde->make_present();
+
   if (args.is_executable) {
     pde->make_executable();
   } else {
