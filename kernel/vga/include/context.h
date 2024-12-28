@@ -1,11 +1,8 @@
 // context.h
-#ifndef BOOTLOADER_GRAPHICS_CONTEXT_H
-#define BOOTLOADER_GRAPHICS_CONTEXT_H
+#ifndef KERNEL_VGA_CONTEXT_H
+#define KERNEL_VGA_CONTEXT_H
 
-// +======================+
-// |       CONTEXT        |
-// +======================+
-
+#include <utility>
 #include "../../include/utils.h"
 
 namespace kernel::graphics {
@@ -30,14 +27,16 @@ enum class colors : uint16 {
   white = 0xF,
 };
 
-inline uint16 make_symbol(char code, colors back_color, colors text_color) {
+using color_pair = std::pair<colors, colors>;
+
+inline uint16 make_symbol(uint8 code, colors text_color, colors back_color) {
   auto character = static_cast<uint16>(code);
-  auto color1 = static_cast<uint16>(text_color) & 0b1111;
-  auto color2 = static_cast<uint16>(back_color) & 0b111;
-  return (character) | (color1 << 8) | (color2 << 12);
+  auto text = static_cast<uint16>(text_color) & 0b1111;
+  auto back = static_cast<uint16>(back_color) & 0b111;
+  return (character) | (text << 8) | (back << 12);
 }
 
-struct context {
+struct context final {
   context();
   context(const context&) = delete;
   context(context&&) = delete;
@@ -45,46 +44,41 @@ struct context {
   context& operator=(const context&) = delete;
   context& operator=(context&&) = delete;
 
-  /*
-    TODO: create context's stack (push_color/pop_color)
-  */
+  inline void set_cursor(usize x, usize y) {
+    x_ = x;
+    y_ = y;
+  }
 
-  inline colors& back_color() { return back_color_; }
-  inline const colors& back_color() const { return back_color_; }
+  inline void move_cursor(isize delta_x, isize delta_y) {
+    x_ += delta_x;
+    y_ += delta_y;
+  }
 
-  inline colors& text_color() { return text_color_; }
-  inline const colors& text_color() const { return text_color_; }
+  inline uint16 get_cursor_value() {
+    static_assert(VGA_MEMORY_START < VGA_MEMORY_END);
+    auto* ptr = reinterpret_cast<uint16*>(VGA_MEMORY_START);
 
-  void set_char(char code);
+    return *(ptr + x_ + (y_ * MAX_ROW_SIZE));
+  }
 
-  void move_cursor_left();
-  void move_cursor_down();
+  inline void set_cursor_value(uint16 value) {
+    static_assert(VGA_MEMORY_START < VGA_MEMORY_END);
+    auto* ptr = reinterpret_cast<uint16*>(VGA_MEMORY_START);
 
-  inline void reset_cursor_x() { x_ = 0; }
-  inline void reset_cursor_y() { y_ = 0; }
+    *(ptr + x_ + (y_ * MAX_ROW_SIZE)) = value;
+  }
+
+  void set_char(uint8 code, const color_pair& color);
 
   void clear_screen();
+  void clear_screen(colors color);
+
+  static constexpr usize MAX_ROW_SIZE = 80;
+  static constexpr usize MAX_COLUMN_SIZE = 25;
 
  private:
   static constexpr usize VGA_MEMORY_START = 0xB8000;
   static constexpr usize VGA_MEMORY_END = 0xB8FA0;
-
-  static constexpr usize ROW_SIZE = 80;
-  static constexpr usize COLUMN_SIZE = 25;
-
-  static constexpr usize STACK_SIZE = 32;
-
-  inline uint16* get_cursor() {
-    static_assert(VGA_MEMORY_START < VGA_MEMORY_END);
-    auto ptr = reinterpret_cast<uint16*>(VGA_MEMORY_START);
-
-    return ptr + x_ + (y_ * ROW_SIZE);
-  }
-
-  // TODO: remove it and work with stack
-
-  colors back_color_;
-  colors text_color_;
 
   usize x_;
   usize y_;

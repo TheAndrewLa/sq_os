@@ -1,9 +1,5 @@
-#ifndef BOOTLOADER_UTILS_H
-#define BOOTLOADER_UTILS_H
-
-// +==================+
-// |      UTILS       |
-// +==================+
+#ifndef KERNEL_UTILS_H
+#define KERNEL_UTILS_H
 
 #include <cstddef>
 #include <cstdint>
@@ -43,18 +39,24 @@ struct is_power_of_two
 template <usize N>
 constexpr bool is_power_of_two_v = is_power_of_two<N>::value;
 
-template <typename Fn>
-struct is_assert_fn : std::is_nothrow_invocable<Fn, bool, const char*> {};
-
-template <typename Fn>
-constexpr bool is_assert_fn_v = is_assert_fn<Fn>::value;
-
 namespace memory {
 
-template <typename T>
+constexpr usize kilobytes(usize n) {
+  return static_cast<usize>(1024) * n;
+}
+
+constexpr usize megabytes(usize n) {
+  return kilobytes(static_cast<usize>(1024) * n);
+}
+
+constexpr usize gigabytes(usize n) {
+  return megabytes(static_cast<usize>(1024) * n);
+}
+
+template <typename T, usize N = 1>
 inline bool is_aligned(T* ptr) {
   usize pointer = reinterpret_cast<usize>(ptr);
-  return !(pointer % sizeof(T));
+  return !(pointer % (sizeof(T) * N));
 }
 
 template <std::copyable T>
@@ -113,7 +115,7 @@ extern "C" void write_cr0(uint32 address);
 extern "C" uint32 read_cr2();
 
 extern "C" uint32 read_cr3();
-extern "C" void write_cr3(uint32 address);
+extern "C" void write_cr3(void* address);
 
 extern "C" uint32 read_cr4();
 extern "C" void write_cr4(uint32 address);

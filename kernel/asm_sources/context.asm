@@ -1,10 +1,18 @@
 [BITS 32]
 
-[EXTERN handler]
+[EXTERN get_context]
+[EXTERN restore_context]
+
+KERNEL_CODE_SEG equ 0x8
+KERNEL_DATA_SEG equ 0x10
+
+USER_CODE_SEG equ 0x18
+USER_DATA_SEG equ 0x20
 
 section .text
 
 ; Saving context
+
 
 collect_context:
 
@@ -21,11 +29,13 @@ collect_context:
     mov gs, eax
 
     push esp
-    call handler
+    
+    call get_context
+    ret
 
 restore_context:
-
     add esp, 0x4
+    mov esp, [esp]
 
     popa
     pop gs
@@ -34,8 +44,6 @@ restore_context:
     pop ds
 
     add esp, 0x8
-
-    sti
     iret
 
 times 0x100 - ($ - $$) db 0x0

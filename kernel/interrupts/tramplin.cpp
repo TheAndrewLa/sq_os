@@ -1,4 +1,4 @@
-// dispatcher.h
+// tramplin.cpp
 #include "include/tramplin.h"
 
 namespace kernel::interrupts {

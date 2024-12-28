@@ -8,8 +8,7 @@ generator::generator(const desc& description) {
   static_assert(sizeof(gate_descriptor) == 8);
   static_assert(is_power_of_two<sizeof(tramplin)>::value);
 
-  syscall_count_ = description.syscalls_count;
-  total_count_ = description.syscalls_count + 0x20 + 0xF;
+  static_assert(TOTAL_INTERRUPTS > 0x2F);
 
   gates_pointer_ =
       reinterpret_cast<gate_descriptor*>(description.gates_address);
@@ -38,14 +37,14 @@ void generator::fill_gates() const {
 
   // Syscalls
 
-  for (usize i = 0x2F; i < 0x2F + syscall_count_; i++) {
+  for (usize i = 0x2F; i < TOTAL_INTERRUPTS; i++) {
     new (&gates_pointer_[i])(gate_descriptor)(
         reinterpret_cast<uint32>(&tramplins_pointer_[i]), SYSCALL_GATE);
   }
 }
 
 void generator::fill_tramplins() const {
-  for (usize i = 0; i < total_count_; i++) {
+  for (usize i = 0; i < TOTAL_INTERRUPTS; i++) {
     new (&tramplins_pointer_[i])(tramplin)(dispatcher_, static_cast<uint8>(i));
   }
 
@@ -66,7 +65,7 @@ void generator::fill_tramplins() const {
 }
 
 void generator::load_idt() const {
-  idt_descriptor desc(total_count_, gates_pointer_);
+  idt_descriptor desc(TOTAL_INTERRUPTS, gates_pointer_);
   desc.fill_idtr();
 }
 

@@ -1,6 +1,6 @@
 # Folders
 
-SUBDIRECTORIES = interrupts pic_8259a vga memory memory/page_tables memory/allocators
+SUBDIRECTORIES = interrupts vga memory memory/page_tables memory/allocators multitasking
 
 BUILD_DIR = _build
 BUILD_SUBDIR = $(SUBDIRECTORIES:%=$(BUILD_DIR)/%)
@@ -10,7 +10,7 @@ RELEASE_SUBDIR = $(SUBDIRECTORIES:%=$(RELEASE_DIR)/%)
 
 # Names of entries
 
-VBR_SOURCE = vbr.asm
+VBR_SOURCE = asm_sources/vbr.asm
 VBR_BINARY = vbr.bin
 
 SOURCES = $(wildcard *.cpp) $(wildcard */*.cpp) $(wildcard */*/*.cpp)
@@ -47,7 +47,7 @@ $(VBR_BINARY): dirs
 	@nasm -fbin $(VBR_SOURCE) -o $(BUILD_DIR)/$@
 
 $(OBJECTS): $(BUILD_DIR)/%.o: %.cpp | dirs
-	@clang++ $(COMMON_COMPILE_FLAGS) $(DEBUG_COMPILE_FLAGS) $*.cpp -o $(BUILD_DIR)/$*.o
+	@clang++ $(COMMON_COMPILE_FLAGS) $(RELEASE_COMPILE_FLAGS) $*.cpp -o $(BUILD_DIR)/$*.o
 
 $(ASSEMBLED_OBJECTS): $(BUILD_DIR)/%.o: asm_sources/%.asm
 	@nasm -felf32 asm_sources/$*.asm -o $(BUILD_DIR)/$*.o
@@ -59,9 +59,17 @@ $(BINARY): $(OBJECTS) $(ASSEMBLED_OBJECTS)
 	@ld -m elf_i386 $(OBJECTS) $(ASSEMBLED_OBJECTS) -T _scripts/flat_binary.ld -o $(BUILD_DIR)/$@
 
 $(IMAGE_NAME): $(BINARY) $(VBR_BINARY)
-	@dd if=/dev/null of=$(BUILD_DIR)/$@ bs=1024 count=1440 status=none
-	@dd if=$(BUILD_DIR)/$(VBR_BINARY) of=$(BUILD_DIR)/$@ conv=notrunc seek=0 status=none
+	@nasm -fbin applications/first.asm -o $(BUILD_DIR)/first_app.bin
+	@nasm -fbin applications/second.asm -o $(BUILD_DIR)/second_app.bin
+	@nasm -fbin applications/third.asm -o $(BUILD_DIR)/third_app.bin
+
+	@dd if=/dev/zero of=$(BUILD_DIR)/$@ bs=1024 count=1440 status=none
+	@dd if=$(BUILD_DIR)/$(VBR_BINARY) of=$(BUILD_DIR)/$@ conv=notrunc status=none
 	@dd if=$(BUILD_DIR)/$(BINARY) of=$(BUILD_DIR)/$@ seek=1
+
+	@dd if=$(BUILD_DIR)/first_app.bin of=$(BUILD_DIR)/$@ seek=120
+	@dd if=$(BUILD_DIR)/second_app.bin of=$(BUILD_DIR)/$@ seek=140
+	@dd if=$(BUILD_DIR)/third_app.bin of=$(BUILD_DIR)/$@ seek=160
 
 bootloader_release: $(IMAGE_NAME)
 bootloader_debug: $(DEBUG_BINARY) $(IMAGE_NAME)

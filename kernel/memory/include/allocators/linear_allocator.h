@@ -5,6 +5,9 @@
 #include <type_traits>
 
 #include "../../../include/utils.h"
+#include "../../../vga/include/blue_screen.h"
+
+extern kernel::graphics::blue_screen* g_blue_screen;
 
 namespace kernel::memory {
 
@@ -14,11 +17,11 @@ struct linear_allocator {
 
   linear_allocator(T* address, usize capacity) {
     start_ = address;
-    end_ = address + capacity;
+    end_ = address + (capacity * N);
     current_ = address;
   }
 
-  linear_allocator(const linear_allocator&) = default;
+  linear_allocator(const linear_allocator&) = delete;
 
   linear_allocator(linear_allocator&& allocator) {
     start_ = allocator.start_;
@@ -26,32 +29,23 @@ struct linear_allocator {
     current_ = allocator.current_;
 
     allocator.start_ = nullptr;
-    allocator.end_ = nullptr;
   }
 
   ~linear_allocator() { clear_memory(); }
 
-  linear_allocator& operator=(const linear_allocator&) = default;
-
-  linear_allocator& operator=(linear_allocator&& allocator) {
-    clear_memory();
-
-    start_ = allocator.start_;
-    end_ = allocator.end_;
-    current_ = allocator.current_;
-
-    allocator.start_ = nullptr;
-    allocator.end_ = nullptr;
-
-    return *this;
-  }
+  linear_allocator& operator=(const linear_allocator&) = delete;
+  linear_allocator& operator=(linear_allocator&& allocator) = delete;
 
   T* allocate() {
     if (current_ >= end_) {
+      g_blue_screen->invoke("Allocation at linear allocator has failed!");
       return nullptr;
     }
 
-    return (current_++);
+    auto* ret = current_;
+    current_ += N;
+
+    return ret;
   }
 
   template <typename... Args>
@@ -59,6 +53,7 @@ struct linear_allocator {
     requires(std::is_constructible_v<T, Args...>)
   {
     if (current_ >= end_) {
+      g_blue_screen->invoke("Allocation at linear allocator has failed!");
       return nullptr;
     }
 
@@ -72,12 +67,24 @@ struct linear_allocator {
   }
 
   void deallocate(T* ptr) {
-    ptr->~T();
+    if ((ptr == nullptr) || (ptr < start_) || (ptr >= end_) ||
+        (!is_aligned<T, N>(ptr))) {
+      return;
+    }
+
+    for (usize i = 0; i < N; i++) {
+      ptr[i].~T();
+    }
+
     return;
   }
 
  private:
   inline void clear_memory() {
+    if (start_ == nullptr) {
+      return;
+    }
+
     usize number = end_ - start_;
     memory_set<uint8>(reinterpret_cast<uint8*>(start_), 0, number * sizeof(T));
   }
@@ -89,4 +96,4 @@ struct linear_allocator {
 
 }  // namespace kernel::memory
 
-#endif
+#endif  // (c) by andrew.la

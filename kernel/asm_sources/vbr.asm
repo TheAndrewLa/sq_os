@@ -4,7 +4,7 @@ section .vbr
 
 SECTORS_COUNT equ 18
 HEADS_COUNT equ 2
-CYLINDERS_COUNT equ 17
+CYLINDERS_COUNT equ 5
 
 ; VBR prologue
 
@@ -34,7 +34,7 @@ CYLINDERS_COUNT equ 17
         mov cx, 0x1
 
 sectors:
-        mov ax, 0x0202                ; Set working mode
+        mov ax, 0x0201                ; Set working mode
 
         int 0x13                      ; Performing read
         jc error_handling
@@ -42,10 +42,10 @@ sectors:
         xor di, di                    ; Update attempts count
 
         mov bp, es                    ;
-        add bp, 0x40                  ; Moving buffer address (segment selector)
+        add bp, 0x20                  ; Moving buffer address by 1kb (0x40 * 16 = 1024)
         mov es, bp                    ;
 
-        add cl, 0x2                   ; Increment sector index & check
+        add cl, 0x1                   ; Increment sector index & check
         cmp cl, SECTORS_COUNT + 1
 
         jne sectors
@@ -62,7 +62,7 @@ cylinders:
         xor dh, dh                  ; Set head to initial head
 
         inc ch                      ; Inrease index of cylinder & check
-        cmp ch, CYLINDERS_COUNT     ; 20
+        cmp ch, CYLINDERS_COUNT     ; 5
 
         jne sectors
 
@@ -102,9 +102,6 @@ gdt_null: dq 0x0
 
 gdt_kernel_code: dq 0x00CF9A000000FFFF
 gdt_kernel_data: dq 0x00CF92000000FFFF
-
-gdt_user_code: dq 0x00CFFA000000FFFF
-gdt_user_data: dq 0x00CFF2000000FFFF
 
 gdt_descriptor:
         dw $ - gdt_null - 1

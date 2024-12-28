@@ -1,6 +1,6 @@
-// dispatcher.h
-#ifndef BOOTLOADER_INTERRUPTS_DISPATCHER_H
-#define BOOTLOADER_INTERRUPTS_DISPATCHER_H
+// tramplin.h
+#ifndef KERNEL_INTERRUPTS_TRAMPLIN_H
+#define KERNEL_INTERRUPTS_TRAMPLIN_H
 
 #include "../../include/utils.h"
 

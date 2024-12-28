@@ -4,7 +4,7 @@ SECTIONS {
     . = 0x8200;
 
     .text : {
-        _build/collect_context.o (.text)
+        _build/context.o (.text)
         _build/main.o (.text)
         *(.text)
         *(.text.*)
@@ -12,9 +12,11 @@ SECTIONS {
 
     .rodata : {
         *(.rodata)
+        *(.rodata.*)
     }
 
     .data : {
         *(.data)
+        *(.data.*)
     }
 }

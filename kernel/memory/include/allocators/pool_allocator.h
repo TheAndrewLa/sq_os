@@ -1,10 +1,12 @@
 #ifndef KERNEL_MEMORY_ALLOCATORS_POOL_ALLOCATOR_H
 #define KERNEL_MEMORY_ALLOCATORS_POOL_ALLOCATOR_H
 
-#include <concepts>
 #include <type_traits>
 
 #include "../../../include/utils.h"
+#include "../../../vga/include/blue_screen.h"
+
+extern kernel::graphics::blue_screen* g_blue_screen;
 
 namespace kernel::memory {
 
@@ -24,7 +26,7 @@ struct pool_allocator {
     }
   }
 
-  pool_allocator(const pool_allocator&) = default;
+  pool_allocator(const pool_allocator&) = delete;
 
   pool_allocator(pool_allocator&& allocator) {
     base_ = allocator.base_;
@@ -32,28 +34,16 @@ struct pool_allocator {
     free_ = allocator.free_;
 
     allocator.base_ = nullptr;
-    allocator.end_ = nullptr;
   }
 
   ~pool_allocator() { clear_memory(); }
 
-  pool_allocator& operator=(const pool_allocator&) = default;
-
-  pool_allocator& operator=(pool_allocator&& allocator) {
-    clear_memory();
-
-    base_ = allocator.base_;
-    end_ = allocator.end_;
-    free_ = allocator.free_;
-
-    allocator.base_ = nullptr;
-    allocator.end_ = nullptr;
-
-    return *this;
-  }
+  pool_allocator& operator=(const pool_allocator&) = delete;
+  pool_allocator& operator=(pool_allocator&& allocator) = delete;
 
   T* allocate() {
     if (free_ == nullptr) {
+      g_blue_screen->invoke("Allocation of pool allocator has failed!");
       return nullptr;
     }
 
@@ -68,6 +58,7 @@ struct pool_allocator {
     requires(std::is_constructible_v<T, Args...>)
   {
     if (free_ == nullptr) {
+      g_blue_screen->invoke("Allocation of pool allocator has failed!");
       return nullptr;
     }
 
@@ -82,11 +73,13 @@ struct pool_allocator {
 
   void deallocate(T* ptr) {
     if ((ptr == nullptr) || (ptr < base_) || (ptr >= end_) ||
-        (!is_aligned(ptr))) {
+        (!is_aligned<T, N>(ptr))) {
       return;
     }
 
-    ptr->~T();
+    for (usize i = 0; i < N; i++) {
+      ptr[i].~T();
+    }
 
     *reinterpret_cast<T**>(ptr) = free_;
     free_ = ptr;
@@ -94,6 +87,10 @@ struct pool_allocator {
 
  private:
   inline void clear_memory() {
+    if (base_ == nullptr) {
+      return;
+    }
+
     usize number = end_ - base_;
     memory_set<uint8>(reinterpret_cast<uint8*>(base_), 0, number * sizeof(T));
   }

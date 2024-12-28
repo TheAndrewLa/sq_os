@@ -1,3 +1,4 @@
+// descriptors.h
 #ifndef KERNEL_INTERRUPTS_DESCRIPTORS_H
 #define KERNEL_INTERRUPTS_DESCRIPTORS_H
 
@@ -68,6 +69,6 @@ struct idt_descriptor {
   [[maybe_unused]] uint32 address_;
 } __attribute__((packed));
 
-}  // namespace boot::interrupts
+}  // namespace kernel::interrupts
 
 #endif  // (c) by andrew.la

@@ -32,11 +32,9 @@ struct pd_entry {
     read_write_ = static_cast<uint8>(mode);
   }
 
-  inline void make_global() { global_ = 0x1; }
-  inline void make_local() { global_ = 0x0; }
+  inline void set_global_bit(bool bit) { global_ = (bit) ? 0x1 : 0x0; }
 
-  inline void make_executable() { nx_bit_ = 0x0; }
-  inline void make_non_executable() { nx_bit_ = 0x1; }
+  inline void set_nx_bit(bool bit) { nx_bit_ = (bit) ? 0x1 : 0x0; }
 
   inline void clear_dirty_bit() { dirty_bit_ = 0x0; }
   inline void clear_access_bit() { access_bit_ = 0x0; }

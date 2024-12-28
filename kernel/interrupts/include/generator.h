@@ -15,8 +15,6 @@ struct generator {
     usize gates_address;
     usize tramplins_address;
     usize dispatcher_address;
-
-    usize syscalls_count;
   };
 
   generator() = delete;
@@ -37,8 +35,7 @@ struct generator {
   void load_idt() const;
 
  private:
-  usize total_count_;
-  usize syscall_count_;
+  static constexpr usize TOTAL_INTERRUPTS = 0x100;
 
   gate_descriptor* gates_pointer_;
   tramplin* tramplins_pointer_;
