@@ -30,11 +30,12 @@ CYLINDERS_COUNT equ 5
 
         xor bx, bx
         xor dh, dh
+        xor di, di
 
         mov cx, 0x1
 
 sectors:
-        mov ax, 0x0201                ; Set working mode
+        mov ax, 0x0202                ; Set working mode
 
         int 0x13                      ; Performing read
         jc error_handling
@@ -42,39 +43,55 @@ sectors:
         xor di, di                    ; Update attempts count
 
         mov bp, es                    ;
-        add bp, 0x20                  ; Moving buffer address by 1kb (0x40 * 16 = 1024)
+        add bp, 0x40                  ; Moving buffer address by 1kb (0x40 * 16 = 1024 = 1K)
         mov es, bp                    ;
 
-        add cl, 0x1                   ; Increment sector index & check
-        cmp cl, SECTORS_COUNT + 1
+        add cl, 0x2                   ; Increment sector index & check
+        cmp cl, SECTORS_COUNT         ; 18
 
-        jne sectors
+        jle sectors
 
 heads:
         mov cl, 0x1           ; Set sector to initial sector
 
         inc dh                ; Increase index of head & check
-        cmp dh, HEADS_COUNT
+        cmp dh, HEADS_COUNT   ; 2
 
-        jne sectors
+        jl sectors
 
 cylinders:
         xor dh, dh                  ; Set head to initial head
+        mov cl, 0x1                 ; Set sector to initial sector
 
         inc ch                      ; Inrease index of cylinder & check
         cmp ch, CYLINDERS_COUNT     ; 5
 
-        jne sectors
+        jl sectors
 
         jmp protected_mode_setup    ; SUCCESS! (all sectors were read)
 
 error_handling:
         inc di               ; Incresing attempts count and try again
         cmp di, 0x5          ;
-        jne sectors
+        jl sectors
+
+        mov ax, 0x0E00 + '?'
+
+        int 0x10
+        int 0x10
+        int 0x10
+
         jmp $
 
 protected_mode_setup:
+
+        ; mov ax, 0x0E00 + '!'
+
+        ; int 0x10
+        ; int 0x10
+        ; int 0x10
+
+        ; jmp $
 
         lgdt [gdt_descriptor]
 
@@ -96,7 +113,7 @@ protected_mode_jump:
         mov ss, eax           ; Setting stack segment
         mov esp, 0x8000       ; Setting stack pointer
 
-        jmp 0x8 : 0x8300      ; C++ code address
+        jmp 0x8300 - 0x7C00   ; C++ code address offset
 
 gdt_null: dq 0x0
 

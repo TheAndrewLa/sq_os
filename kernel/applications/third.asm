@@ -10,4 +10,4 @@ print_loop:
     jmp print_loop
 
 msg:
-    db "Hello from 3rd task!", 0x0
+    db "Hello from 3rd task ", 0x0

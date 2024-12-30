@@ -16,6 +16,8 @@ section .text
 
 collect_context:
 
+    cli
+
     push ds
     push es
     push fs
@@ -29,7 +31,7 @@ collect_context:
     mov gs, eax
 
     push esp
-    
+
     call get_context
     ret
 

@@ -22,7 +22,7 @@ task::task(graphics::framebuffer& fb, void* stack, void* code) : stdout_(fb) {
 
   context_.eflags = (0x0200) | (0x0002);
 
-  context_.error_code = 0x42;
+  context_.error_code = 0x0;
 
   context_.eip = reinterpret_cast<uint32>(code);
   context_.esp = reinterpret_cast<uint32>(stack);
@@ -60,7 +60,6 @@ task_context* task::get_context() {
 }
 
 void task::continue_task() {
-  context_.eflags |= 0x0200;
   restore_context(&context_);
 }
 
