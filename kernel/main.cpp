@@ -17,7 +17,7 @@
 #include "memory/page_tables/include/pde.h"
 #include "memory/page_tables/include/pdpe.h"
 
-#include "multitasking/include/task.h"
+#include "scheduler/include/task.h"
 
 #define PIC_MASTER_COMMAND (0x20)
 #define PIC_MASTER_DATA (0x21)
@@ -31,11 +31,6 @@ kernel::graphics::printer* g_printer_br;
 
 kernel::graphics::blue_screen* g_blue_screen;
 
-kernel::multitasking::task* tasks;
-kernel::usize task_id;
-
-kernel::usize g_counter;
-
 extern "C" void kernel_main() {
   using namespace kernel;
 
@@ -47,9 +42,9 @@ extern "C" void kernel_main() {
   graphics::framebuffer fb_tr(ctx, graphics::frame(30, 0, 50, 12));
   graphics::framebuffer fb_br(ctx, graphics::frame(30, 12, 50, 13));
 
-  fb_left.add_border(graphics::border_styles::line, graphics::colors::gray);
-  fb_tr.add_border(graphics::border_styles::line, graphics::colors::gray);
-  fb_br.add_border(graphics::border_styles::line, graphics::colors::gray);
+  fb_left.add_border(graphics::border_styles::none, graphics::colors::gray);
+  fb_tr.add_border(graphics::border_styles::none, graphics::colors::gray);
+  fb_br.add_border(graphics::border_styles::none, graphics::colors::gray);
 
   graphics::printer printer_left(fb_left);
   graphics::printer printer_tr(fb_tr);
@@ -124,71 +119,31 @@ extern "C" void kernel_main() {
   usize _6mb = memory::megabytes(6);
   usize _7mb = memory::megabytes(7);
 
-  kernel_addresses.map_address(args, 0x1, 0x0);
-  kernel_addresses.map_address(args, _2mb + 0x1, _2mb);
-  kernel_addresses.map_address(args, _4mb + 0x1, _4mb);
-  kernel_addresses.map_address(args, _6mb + 0x1, _6mb);
+  kernel_addresses.map_address(args, 0x0, 0x0);
+  kernel_addresses.map_address(args, _2mb, _2mb);
+  kernel_addresses.map_address(args, _4mb, _4mb);
+  kernel_addresses.map_address(args, _6mb, _6mb);
 
   kernel_addresses.apply();
-
-  tasks = reinterpret_cast<multitasking::task*>(0x101000);
-
-  auto* first_process_addr = reinterpret_cast<uint8*>(0x17000);
-  auto* second_process_addr = reinterpret_cast<uint8*>(0x19800);
-  auto* third_process_addr = reinterpret_cast<uint8*>(0x1c000);
-
-  memory::memory_copy(first_process_addr, reinterpret_cast<uint8*>(_3mb),
-                      memory::kilobytes(10));
-
-  memory::memory_copy(second_process_addr, reinterpret_cast<uint8*>(_5mb),
-                      memory::kilobytes(10));
-
-  memory::memory_copy(third_process_addr, reinterpret_cast<uint8*>(_7mb),
-                      memory::kilobytes(10));
-
-  new (&tasks[0])(multitasking::task)(fb_left, reinterpret_cast<void*>(_3mb),
-                                      reinterpret_cast<void*>(_3mb));
-
-  new (&tasks[1])(multitasking::task)(fb_tr, reinterpret_cast<void*>(_5mb),
-                                      reinterpret_cast<void*>(_5mb));
-
-  new (&tasks[2])(multitasking::task)(fb_br, reinterpret_cast<void*>(_7mb),
-                                      reinterpret_cast<void*>(_7mb));
 
   cpu_features::enable_pae();
   cpu_features::enable_pse();
 
   cpu_features::enable_paging();
 
-  task_id = 0;
-  tasks[0].continue_task();
-
   ASM_STI();
   ASM_ONELINE("jmp .");
 }
 
 void timer_handler(kernel::multitasking::task_context* ctx) {
-  tasks[task_id].set_context(ctx);
-
-  task_id = (task_id + 1) % 3;
-
   kernel::ports::outb(PIC_MASTER_COMMAND, 0x20);
-  tasks[task_id].continue_task();
-}
-
-void syscall_handler(kernel::multitasking::task_context* ctx) {
-  tasks[task_id].write(reinterpret_cast<const char*>(ctx->eax));
-  tasks[task_id].continue_task();
+  kernel::multitasking::restore_context(ctx);
 }
 
 extern "C" void get_context(kernel::multitasking::task_context* ctx) {
   switch (ctx->vector) {
     case 0x20: {
       timer_handler(ctx);
-    } break;
-
-    case 0x80: {
-      syscall_handler(ctx);
     } break;
 
     default:
