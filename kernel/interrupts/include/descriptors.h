@@ -34,13 +34,9 @@ struct gate_info {
   [[maybe_unused]] const uint8 __reserved2 : 0x1 = 0x1;
 } __attribute__((packed));
 
-constexpr gate_info EXCEPTION_GATE =
-    gate_info(gate_type::trap, gate_dpl::kernel);
-
-constexpr gate_info IO_GATE = gate_info(gate_type::interrupt, gate_dpl::kernel);
-
-constexpr gate_info SYSCALL_GATE =
-    gate_info(gate_type::interrupt, gate_dpl::user);
+constexpr gate_info EXCEPTION_GATE(gate_type::trap, gate_dpl::kernel);
+constexpr gate_info IO_GATE(gate_type::interrupt, gate_dpl::kernel);
+constexpr gate_info SYSCALL_GATE(gate_type::interrupt, gate_dpl::user);
 
 struct gate_descriptor {
   gate_descriptor(uint32 tramplin_address, gate_info info);

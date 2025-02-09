@@ -3,6 +3,8 @@
 
 namespace kernel::graphics {
 
+// TODO: make blue screen inherit from base_output
+
 blue_screen::blue_screen(context& ctx) : ctx_(ctx) {}
 
 void blue_screen::invoke(const char* msg) {
@@ -11,7 +13,7 @@ void blue_screen::invoke(const char* msg) {
 
   for (usize i = 0; i < TITLE_HEIGHT; i++) {
     ctx_.set_cursor(PREFIX_LENGTH, i);
-    put_string(TITLE[i], TITLE_WIDTH);
+    put_string(TITLE_CHARS[i], TITLE_WIDTH);
   }
 
   ctx_.set_cursor(PREFIX_LENGTH, TITLE_HEIGHT + 2);
@@ -27,7 +29,7 @@ void blue_screen::put_string(const char* msg) {
   while (msg[i] != '\0') {
     put_char(msg[i++]);
   }
-}
+} 
 
 void blue_screen::put_string(const char* msg, usize number) {
   for (usize i = 0; i < number; i++) {

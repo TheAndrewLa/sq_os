@@ -28,7 +28,7 @@ struct blue_screen {
   static constexpr usize TITLE_HEIGHT = 5;
   static constexpr usize TITLE_WIDTH = 45;
 
-  static constexpr char TITLE[TITLE_HEIGHT][TITLE_WIDTH] = {
+  static constexpr char TITLE_CHARS[TITLE_HEIGHT][TITLE_WIDTH] = {
       R"(        _                    _              )",
       R"( _   _ | |__           ___  | |__           )",
       R"(| | | || '_ \  _____  / _ \ | '_ \          )",

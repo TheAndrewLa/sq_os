@@ -85,6 +85,10 @@ error_handling:
 
 protected_mode_setup:
 
+        mov ah, 0x0
+        mov al, 0x13
+        int 0x10
+
         ; mov ax, 0x0E00 + '!'
 
         ; int 0x10

@@ -10,8 +10,14 @@ SECTIONS {
         *(.text.*)
     }
 
+    .rodata : {
+        *(.rodata)
+        *(.rodata.*)
+    }
+
     .data : {
         *(.data)
+        *(.data.*)
     }
 
     .note : {
@@ -26,10 +32,6 @@ SECTIONS {
         *(.stabstr)
     }
 
-    .rodata : {
-        *(.rodata)
-    }
-    
     .comment : {
         *(.comment)
     }

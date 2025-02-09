@@ -10,7 +10,7 @@ RELEASE_SUBDIR = $(SUBDIRECTORIES:%=$(RELEASE_DIR)/%)
 
 # Names of entries
 
-VBR_SOURCE = asm_sources/vbr.asm
+VBR_SOURCE = vbr.asm
 VBR_BINARY = vbr.bin
 
 SOURCES = $(wildcard *.cpp) $(wildcard */*.cpp) $(wildcard */*/*.cpp)
@@ -26,7 +26,7 @@ IMAGE_NAME = sqos.img
 
 COMMON_COMPILE_FLAGS = -mno-sse -mno-sse2 -mno-sse3 -mno-sse4 -mno-sse4.1 -mno-sse4.2 -m32 -std=c++20 -ffreestanding -fno-pic -fno-exceptions -fno-rtti -c
 RELEASE_COMPILE_FLAGS = -Os -Wall
-DEBUG_COMPILE_FLAGS = -g -Os -Wall -Werror -Wno-return-type
+DEBUG_COMPILE_FLAGS = -g -O0 -Wall -Werror -Wno-return-type
 
 .PHONY: clean
 
@@ -47,16 +47,16 @@ $(VBR_BINARY): dirs
 	@nasm -fbin $(VBR_SOURCE) -o $(BUILD_DIR)/$@
 
 $(OBJECTS): $(BUILD_DIR)/%.o: %.cpp | dirs
-	@clang++ $(COMMON_COMPILE_FLAGS) $(RELEASE_COMPILE_FLAGS) $*.cpp -o $(BUILD_DIR)/$*.o
+	@clang++ $(COMMON_COMPILE_FLAGS) $(DEBUG_COMPILE_FLAGS) $*.cpp -o $(BUILD_DIR)/$*.o
 
 $(ASSEMBLED_OBJECTS): $(BUILD_DIR)/%.o: asm_sources/%.asm
 	@nasm -felf32 asm_sources/$*.asm -o $(BUILD_DIR)/$*.o
 
 $(DEBUG_BINARY): $(OBJECTS) $(ASSEMBLED_OBJECTS)
-	@ld -m elf_i386 $(OBJECTS) $(ASSEMBLED_OBJECTS) -T _scripts/debug_binary.ld -o $(BUILD_DIR)/$@
+	@ld -m elf_i386 $(OBJECTS) $(ASSEMBLED_OBJECTS) -z noexecstack -T _scripts/debug_binary.ld -o $(BUILD_DIR)/$@
 
 $(BINARY): $(OBJECTS) $(ASSEMBLED_OBJECTS)
-	@ld -m elf_i386 $(OBJECTS) $(ASSEMBLED_OBJECTS) -T _scripts/flat_binary.ld -o $(BUILD_DIR)/$@
+	@ld -m elf_i386 $(OBJECTS) $(ASSEMBLED_OBJECTS) -z noexecstack -T _scripts/flat_binary.ld -o $(BUILD_DIR)/$@
 
 $(IMAGE_NAME): $(BINARY) $(VBR_BINARY)
 	@nasm -fbin applications/first.asm -o $(BUILD_DIR)/first_app.bin
@@ -71,17 +71,8 @@ $(IMAGE_NAME): $(BINARY) $(VBR_BINARY)
 	@dd if=$(BUILD_DIR)/second_app.bin of=$(BUILD_DIR)/$@ conv=notrunc seek=140
 	@dd if=$(BUILD_DIR)/third_app.bin of=$(BUILD_DIR)/$@ conv=notrunc seek=160
 
-#	@nasm -fbin applications/empty_90kb.asm -o $(BUILD_DIR)/sample.bin
+debug: clean $(IMAGE_NAME)
+	@qemu-system-i386 -nic none  -S -s -drive file=$(BUILD_DIR)/$(IMAGE_NAME),if=floppy,format=raw
 
-#	@dd if=/dev/zero of=$(BUILD_DIR)/$@ bs=1024 count=1440 status=none
-#	@dd if=$(BUILD_DIR)/$(VBR_BINARY) of=$(BUILD_DIR)/$@ conv=notrunc status=none
-#	@dd if=$(BUILD_DIR)/sample.bin of=$(BUILD_DIR)/$@ conv=notrunc seek=1
-
-bootloader_release: $(IMAGE_NAME)
-bootloader_debug: $(DEBUG_BINARY) $(IMAGE_NAME)
-
-debug: clean bootloader_debug
-	@qemu-system-i386 -display sdl,gl=on -nic none -S -s -drive file=$(BUILD_DIR)/$(IMAGE_NAME),if=floppy,format=raw
-
-release: clean bootloader_release
-	@qemu-system-i386 -display sdl,gl=on -nic none -drive file=$(BUILD_DIR)/$(IMAGE_NAME),if=floppy,format=raw
+release: clean $(DEBUG_BINARY) $(IMAGE_NAME)
+	@qemu-system-i386 -nic none -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0 -drive file=$(BUILD_DIR)/$(IMAGE_NAME),if=floppy,format=raw

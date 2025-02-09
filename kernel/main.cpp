@@ -20,10 +20,10 @@
 #include "scheduler/include/task.h"
 
 #define PIC_MASTER_COMMAND (0x20)
-#define PIC_MASTER_DATA (0x21)
+#define PIC_MASTER_DATA (PIC_MASTER_COMMAND + 0x1)
 
 #define PIC_SLAVE_COMMAND (0xA0)
-#define PIC_SLAVE_DATA (0xA1)
+#define PIC_SLAVE_DATA (PIC_SLAVE_COMMAND + 0x1)
 
 kernel::graphics::printer* g_printer_left;
 kernel::graphics::printer* g_printer_tr;
@@ -31,8 +31,29 @@ kernel::graphics::printer* g_printer_br;
 
 kernel::graphics::blue_screen* g_blue_screen;
 
+kernel::usize g_counter;
+
 extern "C" void kernel_main() {
   using namespace kernel;
+
+  uint32 nFrequence = 1000;
+
+  uint32 Div;
+  uint8 tmp;
+
+  Div = 1193180 / nFrequence;
+
+  ports::outb(0x43, 0xB6);
+  ports::outb(0x42, static_cast<uint8>(Div));
+  ports::outb(0x42, static_cast<uint8>(Div >> 8));
+
+  tmp = ports::inb(0x61);
+
+  if (tmp != (tmp | 3)) {
+    ports::outb(0x61, tmp | 3);
+  }
+
+  /*
 
   graphics::context ctx;
 
@@ -42,9 +63,9 @@ extern "C" void kernel_main() {
   graphics::framebuffer fb_tr(ctx, graphics::frame(30, 0, 50, 12));
   graphics::framebuffer fb_br(ctx, graphics::frame(30, 12, 50, 13));
 
-  fb_left.add_border(graphics::border_styles::none, graphics::colors::gray);
-  fb_tr.add_border(graphics::border_styles::none, graphics::colors::gray);
-  fb_br.add_border(graphics::border_styles::none, graphics::colors::gray);
+  fb_left.add_border(graphics::border_styles::line, graphics::colors::gray);
+  fb_tr.add_border(graphics::border_styles::line, graphics::colors::green);
+  fb_br.add_border(graphics::border_styles::line, graphics::colors::red);
 
   graphics::printer printer_left(fb_left);
   graphics::printer printer_tr(fb_tr);
@@ -68,14 +89,14 @@ extern "C" void kernel_main() {
   generator.fill_tramplins();
   generator.load_idt();
 
-  uint8 icw1 = 0b00010001;
-  uint8 icw4 = 0b00000001;
+  constexpr uint8 icw1 = 0b00010001;
+  constexpr uint8 icw4 = 0b00000001;
 
-  uint8 icw2_master = 0x20;
-  uint8 icw2_slave = 0x28;
+  constexpr uint8 icw2_master = 0x20;
+  constexpr uint8 icw2_slave = 0x28;
 
-  uint8 icw3_master = 0b00000100;
-  uint8 icw3_slave = 0x2;
+  constexpr uint8 icw3_master = 0b00000100;
+  constexpr uint8 icw3_slave = 0x2;
 
   ports::outb(PIC_MASTER_COMMAND, icw1);
   ports::outb(PIC_SLAVE_COMMAND, icw1);
@@ -112,12 +133,9 @@ extern "C" void kernel_main() {
   memory::mapping_args args = {
       .is_writable = true, .is_executable = true, .user_mode = false};
 
-  usize _2mb = memory::megabytes(2);
-  usize _3mb = memory::megabytes(3);
-  usize _4mb = memory::megabytes(4);
-  usize _5mb = memory::megabytes(5);
-  usize _6mb = memory::megabytes(6);
-  usize _7mb = memory::megabytes(7);
+  constexpr usize _2mb = memory::megabytes(2);
+  constexpr usize _4mb = memory::megabytes(4);
+  constexpr usize _6mb = memory::megabytes(6);
 
   kernel_addresses.map_address(args, 0x0, 0x0);
   kernel_addresses.map_address(args, _2mb, _2mb);
@@ -130,12 +148,19 @@ extern "C" void kernel_main() {
   cpu_features::enable_pse();
 
   cpu_features::enable_paging();
-
+  
   ASM_STI();
+  */
   ASM_ONELINE("jmp .");
 }
 
 void timer_handler(kernel::multitasking::task_context* ctx) {
+  g_printer_left->operator<<("Timer value: ");
+  g_printer_left->operator<<(g_counter);
+  g_printer_left->operator<<('\n');
+
+  g_counter++;
+
   kernel::ports::outb(PIC_MASTER_COMMAND, 0x20);
   kernel::multitasking::restore_context(ctx);
 }
