@@ -53,8 +53,6 @@ extern "C" void kernel_main() {
     ports::outb(0x61, tmp | 3);
   }
 
-  /*
-
   graphics::context ctx;
 
   graphics::blue_screen bs(ctx);
@@ -150,7 +148,6 @@ extern "C" void kernel_main() {
   cpu_features::enable_paging();
   
   ASM_STI();
-  */
   ASM_ONELINE("jmp .");
 }
 
